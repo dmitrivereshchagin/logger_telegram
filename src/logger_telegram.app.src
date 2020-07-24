@@ -1,0 +1,12 @@
+{application, logger_telegram,
+ [{description, "Telegram handler for Logger"},
+  {vsn, semver},
+  {applications, [inets, kernel, ssl, stdlib]},
+  {env,
+   [{base_uri, "https://api.telegram.org"},
+    {disable_notification_level, all},
+    {disable_web_page_preview, true},
+    {logger, [{handler, telegram, logger_telegram_h, #{}}]}
+   ]},
+  {mod, {logger_telegram_app, []}}
+ ]}.

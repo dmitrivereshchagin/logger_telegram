@@ -1,0 +1,17 @@
+---
+name: test
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        otp-vsn: ['21.2', '22', '23']
+    container: erlang:${{ matrix.otp-vsn }}-alpine
+    steps:
+      - uses: actions/checkout@v2
+      - run: rebar3 lint
+      - run: rebar3 dialyzer
+      - run: rebar3 do ct --cover, cover --verbose
