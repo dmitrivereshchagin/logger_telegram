@@ -57,4 +57,4 @@ to several chats or channels:
 If you don't want handlers to be added on application start, pass empty
 list as the `logger` configuration parameter:
 
-     {logger_telegram, [{logger, []}]}
+    {logger_telegram, [{logger, []}]}
