@@ -130,51 +130,51 @@ valid_request_sent(_Config) ->
     ok = logger:add_handler('H', logger_telegram_h, handler_config(HConfig, FConfig)),
     {ok, {Method, URI, Body}} = log_and_capture_request(notice, "TEXT"),
     ?assertEqual('POST', Method),
-    ?assertEqual(<<"/botTOKEN/sendMessage">>, URI),
-    ?assertEqual(<<"CHAT-ID">>, proplists:get_value(<<"chat_id">>, Body)),
-    ?assertEqual(<<"TEXT">>, proplists:get_value(<<"text">>, Body)).
+    ?assertEqual("/botTOKEN/sendMessage", URI),
+    ?assertEqual("CHAT-ID", proplists:get_value("chat_id", Body)),
+    ?assertEqual("TEXT", proplists:get_value("text", Body)).
 
 notification_disabled_for_all_levels(_Config) ->
     HandlerConfig = handler_config(#{disable_notification_level => all}),
     ok = logger:add_handler('H', logger_telegram_h, HandlerConfig),
     {ok, {_, _, Body}} = log_and_capture_request(emergency),
-    ?assertEqual(<<"true">>, proplists:get_value(<<"disable_notification">>, Body)).
+    ?assertEqual("true", proplists:get_value("disable_notification", Body)).
 
 notification_disabled_for_less_severe_level(_Config) ->
     HandlerConfig = handler_config(#{disable_notification_level => warning}),
     ok = logger:add_handler('H', logger_telegram_h, HandlerConfig),
     {ok, {_, _, Body}} = log_and_capture_request(notice),
-    ?assertEqual(<<"true">>, proplists:get_value(<<"disable_notification">>, Body)).
+    ?assertEqual("true", proplists:get_value("disable_notification", Body)).
 
 notification_disabled_for_specified_level(_Config) ->
     HandlerConfig = handler_config(#{disable_notification_level => warning}),
     ok = logger:add_handler('H', logger_telegram_h, HandlerConfig),
     {ok, {_, _, Body}} = log_and_capture_request(warning),
-    ?assertEqual(<<"true">>, proplists:get_value(<<"disable_notification">>, Body)).
+    ?assertEqual("true", proplists:get_value("disable_notification", Body)).
 
 notification_enabled_for_more_severe_level(_Config) ->
     HandlerConfig = handler_config(#{disable_notification_level => warning}),
     ok = logger:add_handler('H', logger_telegram_h, HandlerConfig),
     {ok, {_, _, Body}} = log_and_capture_request(error),
-    ?assertEqual(<<"false">>, proplists:get_value(<<"disable_notification">>, Body)).
+    ?assertEqual("false", proplists:get_value("disable_notification", Body)).
 
 notification_enabled_for_all_levels(_Config) ->
     HandlerConfig = handler_config(#{disable_notification_level => none}),
     ok = logger:add_handler('H', logger_telegram_h, HandlerConfig),
     {ok, {_, _, Body}} = log_and_capture_request(notice),
-    ?assertEqual(<<"false">>, proplists:get_value(<<"disable_notification">>, Body)).
+    ?assertEqual("false", proplists:get_value("disable_notification", Body)).
 
 web_page_pareview_disabled(_Config) ->
     HandlerConfig = handler_config(#{disable_web_page_preview => true}),
     ok = logger:add_handler('H', logger_telegram_h, HandlerConfig),
     {ok, {_, _, Body}} = log_and_capture_request(notice),
-    ?assertEqual(<<"true">>, proplists:get_value(<<"disable_web_page_preview">>, Body)).
+    ?assertEqual("true", proplists:get_value("disable_web_page_preview", Body)).
 
 web_page_pareview_enabled(_Config) ->
     HandlerConfig = handler_config(#{disable_web_page_preview => false}),
     ok = logger:add_handler('H', logger_telegram_h, HandlerConfig),
     {ok, {_, _, Body}} = log_and_capture_request(notice),
-    ?assertEqual(<<"false">>, proplists:get_value(<<"disable_web_page_preview">>, Body)).
+    ?assertEqual("false", proplists:get_value("disable_web_page_preview", Body)).
 
 %%%===================================================================
 %%% Helper functions
@@ -198,9 +198,9 @@ log_and_capture_request(Level, String) ->
 
 request(Request) ->
     Method = bookish_spork_request:method(Request),
-    URI = bookish_spork_request:uri(Request),
-    Body = uri_string:dissect_query(bookish_spork_request:body(Request)),
-    {Method, URI, Body}.
+    URI = binary_to_list(bookish_spork_request:uri(Request)),
+    Body = binary_to_list(bookish_spork_request:body(Request)),
+    {Method, URI, uri_string:dissect_query(Body)}.
 
 handler_config(HConfig) ->
     handler_config(HConfig, #{}).
