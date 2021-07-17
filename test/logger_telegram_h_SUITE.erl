@@ -129,7 +129,7 @@ valid_request_sent(_Config) ->
     FConfig = #{template => [msg]},
     ok = logger:add_handler('H', logger_telegram_h, handler_config(HConfig, FConfig)),
     {ok, {Method, URI, Body}} = log_and_capture_request(notice, "TEXT"),
-    ?assertEqual('POST', Method),
+    ?assertEqual(post, Method),
     ?assertEqual("/botTOKEN/sendMessage", URI),
     ?assertEqual("CHAT-ID", proplists:get_value("chat_id", Body)),
     ?assertEqual("TEXT", proplists:get_value("text", Body)).
