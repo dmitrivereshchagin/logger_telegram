@@ -44,7 +44,7 @@ adding_handler(Config) ->
 
 %% @private
 -spec changing_config(SetOrUpdate, Old :: Config, New :: Config) ->
-    {ok, Config} | {error, term()} when
+          {ok, Config} | {error, term()} when
       SetOrUpdate :: set | update, Config :: logger:handler_config().
 changing_config(set, _OldConfig, NewConfig) ->
     update_h_config(get_default_h_config(), NewConfig);
@@ -53,10 +53,9 @@ changing_config(update, OldConfig, NewConfig) ->
 
 %% @private
 -spec log(logger:log_event(), logger:handler_config()) -> ok.
-log(#{level := Level} = LogEvent, #{config := HConfig} = Config) ->
-    Text = format_log_event(LogEvent, Config),
+log(LogEvent, #{formatter := Formatter, config := HConfig}) ->
     _ = httpc:request(
-          post, http_request(Level, Text, HConfig),
+          post, http_request(LogEvent, Formatter, HConfig),
           [{timeout, ?HTTP_REQUEST_TIMEOUT}],
           [{sync, false}, {receiver, fun(_) -> ok end}]),
     ok.
@@ -113,44 +112,34 @@ check_h_config([Other | _Config]) ->
 check_h_config([]) ->
     ok.
 
-format_log_event(LogEvent, #{formatter := {FModule, FConfig}}) ->
-    FModule:format(LogEvent, FConfig).
-
-http_request(Level, Text, HConfig) ->
+http_request(LogEvent, Formatter, HConfig) ->
     URI = http_request_uri("sendMessage", HConfig),
     ContentType = "application/x-www-form-urlencoded",
-    Body = http_request_body(Level, Text, HConfig),
+    Body = http_request_body(LogEvent, Formatter, HConfig),
     {URI, [], ContentType, Body}.
 
 http_request_uri(APIMethod, #{auth_token := AuthToken, base_uri := BaseURI}) ->
     BaseURI ++ "/bot" ++ AuthToken ++ "/" ++ APIMethod.
 
-http_request_body(Level, Text, HConfig) ->
-    ChatId = maps:get(chat_id, HConfig),
-    DisableNotificationLevel = maps:get(disable_notification_level, HConfig),
-    DisableWebPagePreview = maps:get(disable_web_page_preview, HConfig),
+http_request_body(#{level := Level} = LogEvent, Formatter, HConfig) ->
+    DNL = maps:get(disable_notification_level, HConfig),
+    DPP = maps:get(disable_web_page_preview, HConfig),
     uri_string:compose_query(
-      [{"chat_id", ChatId},
-       {"text", Text},
-       {"disable_notification",
-        encode_disable_notification_level(Level, DisableNotificationLevel)},
-       {"disable_web_page_preview",
-        encode_disable_web_page_preview(DisableWebPagePreview)}
+      [{"chat_id", maps:get(chat_id, HConfig)},
+       {"text", format_log_event(LogEvent, Formatter)},
+       {"disable_notification", encode_boolean(disable_notification(DNL, Level))},
+       {"disable_web_page_preview", encode_boolean(DPP)}
       ]).
 
-encode_disable_notification_level(_Level, all) ->
-    "true";
-encode_disable_notification_level(_Level, none) ->
-    "false";
-encode_disable_notification_level(Level, DisableLevel) ->
-    case logger:compare_levels(Level, DisableLevel) of
-        gt ->
-            "false";
-        _ ->
-            "true"
-    end.
+format_log_event(LogEvent, {FModule, FConfig}) ->
+    FModule:format(LogEvent, FConfig).
 
-encode_disable_web_page_preview(true) ->
-    "true";
-encode_disable_web_page_preview(false) ->
-    "false".
+disable_notification(none, _LogLevel) ->
+    false;
+disable_notification(all, _LogLevel) ->
+    true;
+disable_notification(DisableLevel, LogLevel) ->
+    logger:compare_levels(DisableLevel, LogLevel) =/= lt.
+
+encode_boolean(true)  -> "true";
+encode_boolean(false) -> "false".
