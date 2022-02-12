@@ -1,7 +1,7 @@
 {application, logger_telegram,
  [{description, "Telegram handler for Logger"},
   {vsn, semver},
-  {applications, [inets, kernel, ssl, stdlib]},
+  {applications, [booze, kernel, stdlib]},
   {env,
    [{base_uri, "https://api.telegram.org"},
     {disable_notification_level, all},

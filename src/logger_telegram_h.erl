@@ -10,8 +10,6 @@
 %%% Macro definitions
 %%%===================================================================
 
--define(HTTP_REQUEST_TIMEOUT, timer:seconds(5)).
-
 -define(IS_LEVEL(L),
         (L =:= emergency orelse
          L =:= alert     orelse
@@ -54,10 +52,11 @@ changing_config(update, OldConfig, NewConfig) ->
 %% @private
 -spec log(logger:log_event(), logger:handler_config()) -> ok.
 log(LogEvent, #{formatter := Formatter, config := HConfig}) ->
-    _ = httpc:request(
-          post, http_request(LogEvent, Formatter, HConfig),
-          [{timeout, ?HTTP_REQUEST_TIMEOUT}],
-          [{sync, false}, {receiver, fun(_) -> ok end}]),
+    AuthToken = maps:get(auth_token, HConfig),
+    BaseURI = maps:get(base_uri, HConfig),
+    _ = booze:post(["/bot", AuthToken, "/sendMessage"],
+                   booze:client(#{base_uri => BaseURI}),
+                   #{body => {form, request_body(LogEvent, Formatter, HConfig)}}),
     ok.
 
 %%%===================================================================
@@ -112,24 +111,14 @@ check_h_config([Other | _Config]) ->
 check_h_config([]) ->
     ok.
 
-http_request(LogEvent, Formatter, HConfig) ->
-    URI = http_request_uri("sendMessage", HConfig),
-    ContentType = "application/x-www-form-urlencoded",
-    Body = http_request_body(LogEvent, Formatter, HConfig),
-    {URI, [], ContentType, Body}.
-
-http_request_uri(APIMethod, #{auth_token := AuthToken, base_uri := BaseURI}) ->
-    BaseURI ++ "/bot" ++ AuthToken ++ "/" ++ APIMethod.
-
-http_request_body(#{level := Level} = LogEvent, Formatter, HConfig) ->
+request_body(#{level := Level} = LogEvent, Formatter, HConfig) ->
     DNL = maps:get(disable_notification_level, HConfig),
     DPP = maps:get(disable_web_page_preview, HConfig),
-    uri_string:compose_query(
-      [{"chat_id", maps:get(chat_id, HConfig)},
-       {"text", format_log_event(LogEvent, Formatter)},
-       {"disable_notification", encode_boolean(disable_notification(DNL, Level))},
-       {"disable_web_page_preview", encode_boolean(DPP)}
-      ]).
+    [{"chat_id", maps:get(chat_id, HConfig)},
+     {"text", format_log_event(LogEvent, Formatter)},
+     {"disable_notification", encode_boolean(disable_notification(DNL, Level))},
+     {"disable_web_page_preview", encode_boolean(DPP)}
+    ].
 
 format_log_event(LogEvent, {FModule, FConfig}) ->
     FModule:format(LogEvent, FConfig).

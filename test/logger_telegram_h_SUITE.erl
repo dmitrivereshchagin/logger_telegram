@@ -42,7 +42,7 @@ groups() ->
     ].
 
 init_per_group(bot_api, Config) ->
-    {ok, _} = application:ensure_all_started(inets),
+    {ok, _} = application:ensure_all_started(booze),
     {ok, _} = bookish_spork:start_server(),
     Config;
 init_per_group(_Group, Config) ->
