@@ -1,8 +1,7 @@
 -module(logger_telegram_SUITE).
-
 -compile([export_all, nowarn_export_all]).
 
--include_lib("eunit/include/eunit.hrl").
+-include_lib("stdlib/include/assert.hrl").
 
 %%%===================================================================
 %%% Macro definitions
