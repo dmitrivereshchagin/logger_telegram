@@ -8,23 +8,23 @@ Handler configuration is a map which can contain general configuration
 and handler specific parameters.  The specific data is stored in a sub
 map with the key `config`, and can contain the following parameters:
 
-*   `auth_token = string()`:  
+*   `auth_token = string()`:\
     Token to access Bot API.  Talk to [BotFather][1] in order to create
     a bot and receive its token.  Required.
 
-*   `chat_id = string()`:  
+*   `chat_id = string()`:\
     Target chat identifier (or channel username in the format
     `@channel`).  Required.
 
     If you plan to use a private channel, follow [these instructions][2]
     to obtain its identifier.
 
-*   `disable_notification_level = logger:level() | all | none`:  
+*   `disable_notification_level = logger:level() | all | none`:\
     Specifies log level to disable sound notifications.  Log events with
     the same, or a less severe level, are sent silently.  Defaults to
     `all`.
 
-*   `disable_web_page_preview = boolean()`:  
+*   `disable_web_page_preview = boolean()`:\
     Disables link previews for links in messages.  Defaults to `true`.
 
 All these parameters can also be set in the application configuration.
